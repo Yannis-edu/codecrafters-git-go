@@ -15,7 +15,7 @@ var catFileCmd = &cobra.Command{
 	Use:   "cat-file",
 	Short: "Provide contents or details of repository objects",
 	Args:  cobra.ExactArgs(1),
-	Run:   catFile,
+	RunE:  catFile,
 }
 
 func init() {
@@ -23,27 +23,28 @@ func init() {
 	catFileCmd.Flags().BoolP("pretty", "p", false, "Pretty-print the contents of <object> based on its type.") // Not used yet
 }
 
-func catFile(cmd *cobra.Command, args []string) {
+func catFile(cmd *cobra.Command, args []string) error {
 	filename := args[0]
 	filename = ".git/objects/" + filename[:2] + "/" + filename[2:]
 
 	f, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer f.Close()
 
-	r, err := zlib.NewReader(f)
+	zr, err := zlib.NewReader(f)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	defer r.Close()
+	defer zr.Close()
 
-	raw, err := io.ReadAll(r)
+	raw, err := io.ReadAll(zr)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	parts := bytes.SplitN(raw, []byte{0}, 2)
 	fmt.Print(string(parts[1]))
+	return nil
 }
